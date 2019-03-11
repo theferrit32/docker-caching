@@ -77,8 +77,6 @@ func dockerPullRequestRedirectPreProcessor(redirectPullTo string) func(req *http
 	return processor
 }
 
-//var redirectPullTo string
-
 func main() {
 	logger.SetLogLevel(loggo.DEBUG)
 	fmt.Printf("hello\n")
@@ -87,7 +85,7 @@ func main() {
 	ensureFileGone(sockPath)
 
 	redirectPullTo := "localhost:5000"
-	unix_domainsocket_proxy(
+	unix_domain_socket_proxy(
 		sockPath,
 		destSockPath,
 		dockerPullRequestRedirectPreProcessor(redirectPullTo))

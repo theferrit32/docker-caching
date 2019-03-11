@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -24,7 +23,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 			logger.Errorf("failed to read body")
 			return
 		}
-		fmt.Printf("%s %s %s\n", r.Method, r.URL.String(), r.Proto)
+		logger.Infof("%s %s %s\n", r.Method, r.URL.String(), r.Proto)
 
 		httpc := http.Client{
 			// this http.Client.Transport override for unix domain socket adapted from:
@@ -39,7 +38,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 		// make a new request to send to actual socket
 		var dstReq *http.Request
 		var dstContentLength int
-		fmt.Println("request url: " + r.URL.String())
+		logger.Infof("request url: " + r.URL.String())
 		if method == "GET" {
 			dstReq, err = http.NewRequest(
 				method,
@@ -55,7 +54,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 				dstForm.Set(k, strings.TrimSpace(val))
 			}
 			formStr := dstForm.Encode()
-			fmt.Println("form: " + formStr)
+			logger.Debugf("form: " + formStr)
 			dstReq, err = http.NewRequest(
 				method,
 				"http://unix"+r.URL.String(), // URL is the path in server
@@ -66,7 +65,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 		for h, val := range r.Header {
 			h = strings.ToLower(h)
 			for _, v := range val {
-				fmt.Printf("header: %v: %v\n", h, v)
+				logger.Debugf("header: %v: %v\n", h, v)
 				dstReq.Header.Add(h, strings.TrimSpace(v))
 			}
 		}
@@ -78,7 +77,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 		changed := requestPreProcessor(dstReq)
 		if changed {
 			logger.Infof("requestPreProcessor changed the request")
-			fmt.Printf("%v\n", dstReq.URL)
+			logger.Infof("%v\n", dstReq.URL)
 		}
 
 		// send proxy request to destination, and get response
@@ -113,8 +112,8 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 		// content-length header should already be set, but set from the field as well
 		//w.Header().Set("content-length", strconv.FormatInt(res.ContentLength, 10))
 		resStatusCode := res.StatusCode
-		fmt.Println("RESPONSE:")
-		fmt.Println(string(resBody))
+		logger.Debugf("RESPONSE:")
+		logger.Debugf(string(resBody))
 		w.WriteHeader(int(resStatusCode))
 
 		w.Write([]byte(resBody))
@@ -122,7 +121,7 @@ func handler(destSockPath string, requestPreProcessor func(*http.Request) bool) 
 	return myf
 }
 
-func unix_domainsocket_proxy(srcPath string, dstPath string, reqPreProcessor func(req *http.Request) bool) {
+func unix_domain_socket_proxy(srcPath string, dstPath string, reqPreProcessor func(req *http.Request) bool) {
 	defaultRequestPreProcessor := func(req *http.Request) bool {
 		// modify nothing
 		return false
