@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func handleConnection(conn net.Conn, c chan string) {
+func handleConnection(conn net.Conn, c chan string, destSockPath string) {
 	client, err := net.Dial("unix", destSockPath)
 	if err != nil {
 		logger.Errorf("failed to connect to dest socket")
